@@ -110,21 +110,16 @@ disable_output_text: False
 write_errors_to_file: False
 disable_output_end_prefix: False
 enable_error_output: False
-
 max_parallel_job: 3
 retry_count: 3
 delay_before_retry: 0.01
 timeout: 0.1
-
 smb_port: 445
-
 smb_shares_check_read: True
 smb_shares_check_write: True
-
 smb_files_ignore_shares:
   - ipc$
   - print$
-
 always_download:
   - \.config$
   - \.ini$
@@ -132,24 +127,22 @@ always_download:
   - \.txt$
   - \.metadata$
   - \.rsc$
-
-download_folder: ./downloads/
+download_folder: ./donwloads/
 max_download_size: 10
-
 disable_password_check: False
 disable_sensitive_check: False
 disable_username_check: False
-
 patterns:
   TCKN:
-    - "[1-9][0-9]{10}"
+    - "[1-9]{1}[0-9]{9}[02468]{1}"
   credit_card:
-    - "4[0-9]{12}(?:[0-9]{3})?"
-    - "5[1-5][0-9]{14}"
-    - "6(?:011|5[0-9]{2})[0-9]{12}"
-    - "3[47][0-9]{13}"
-    - "3(?:0[0-5]|[68][0-9])[0-9]{11}"
-    - "(?:2131|1800|35\\d{3})\\d{11}"
+    - "4[\\d\\s]{12}(?:[\\d\\s]{3})?"
+    - "(?:5[1-5]|2[2-7])[\\d\\s]{14}"
+    - "6(?:011|5[\\d\\s]{2})[\\d\\s]{12}"
+    - "3[47][\\d\\s]{13}"
+    - "3(?:0[0-5]|[68][\\d\\s])[\\d\\s]{11}"
+    - "(?:2131|1800|35[\\d\\s]{3})[\\d\\s]{11}"
+    - "(?:5[0678][\\d\\s]{2}|6304|6390|67[\\d\\s]{2})[\\d\\s]{8,15}"
   password:
     - "password"
     - "pwd="
@@ -157,7 +150,6 @@ patterns:
     - "parola"
     - "sifre"
     - "contentHash"
-
 add_filename_to_analyz: True
 check_binarys: True
 take_before: 50
@@ -165,9 +157,7 @@ take_after: 50
 keep-extracted-files: False
 always-keep-extracted-files: False
 add-filename-to-analyze: True
-
 thread: 20
-
 ignore_folder_name_contains:
   - "audio"
   - "bin"
