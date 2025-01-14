@@ -10,6 +10,7 @@ from typing import List
 import docx
 import openpyxl
 from lnc.modules.base.file import normalize_path
+import fitz
 
 class DOC(ExtrackBase):
     config: Config = None
