@@ -67,8 +67,24 @@ class SMB_Files(SMB_Module):
 
     def list_path(self, share:Share, folder:str, r=0):
         try:
-            for file in self.connection.listPath(share.name, folder + '/*'):
+            # Create a list to hold directory entries temporarily so we can count them
+            entries = list(self.connection.listPath(share.name, folder + '/*'))
+            
+            # Count the entries in this directory
+            entry_count = len(entries)
+            
+            # Check if the count exceeds the configured maximum
+            if entry_count > self.config.max_dir_entries:
+                # Log a message about skipping this directory
+                self.console.print(f'[yellow][*] Skipping directory with too many entries: {PROTOCOL.lower()}://{self.target}/{share.name}{folder} ({entry_count} > {self.config.max_dir_entries})[/yellow]')
+                self.write_error(f'Skipped directory with {entry_count} entries (max: {self.config.max_dir_entries}): {PROTOCOL.lower()}://{self.target}/{share.name}{folder}')
+                # Return without yielding anything, effectively skipping this directory
+                return
+                
+            # If within limits, yield the entries
+            for file in entries:
                 yield file
+                
         except Exception as e:
             if r < self.config.retry_count:
                 sleep(self.config.delay_before_retry)

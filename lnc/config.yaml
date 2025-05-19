@@ -52,6 +52,7 @@ keep-extracted-files: False
 always-keep-extracted-files: False
 add-filename-to-analyze: True
 thread: 20
+max_dir_entries: 1000
 ignore_folder_name_contains:
   - "audio"
   - "bin"

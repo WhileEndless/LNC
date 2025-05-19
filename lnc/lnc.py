@@ -74,7 +74,8 @@ default_values={
     "timeout": 0.1,
     "disable_output_end_prefix": False,
     "ignore_folder_name_contains": ["audio", "bin", "boot", "dev", "etc", "lib", "lib64", "lost+found", "media", "opt", "proc", "run", "sbin", "srv", "sys", "tmp", "usr", "snap", "swapfile", "vmlinuz"],
-    "ftp_port": 21
+    "ftp_port": 21,
+    "max_dir_entries": 1000
 }
 
 def parse_args():
@@ -160,6 +161,8 @@ def parse_args():
     def add_download_filter_args(parser):
         parser.add_argument('--ignore_folder_name_contains', type=str, nargs='+', 
                            help='Skip folders containing these strings. Example: --ignore_folder_name_contains audio bin boot')
+        parser.add_argument('--max_dir_entries', type=int, 
+                           help=f'Maximum number of entries in a directory before skipping (default: {default_values["max_dir_entries"]})')
         return parser
     def add_smb_shares_filter_args(parser):
         parser.add_argument('--ignore_shares', dest='smb_files_ignore_shares', type=str, nargs='+', 

@@ -51,7 +51,23 @@ class FTP_Files(FTP_Module):
 
     def list_path(self, folder: str, r=0):
         try:
-            return self.connection.nlst(folder)
+            # Get all entries in the directory
+            entries = self.connection.nlst(folder)
+            
+            # Count the entries
+            entry_count = len(entries)
+            
+            # Check if the count exceeds the configured maximum
+            if entry_count > self.config.max_dir_entries:
+                # Log a message about skipping this directory
+                self.console.print(f'[yellow][*] Skipping directory with too many entries: {PROTOCOL.lower()}://{self.target}{folder} ({entry_count} > {self.config.max_dir_entries})[/yellow]')
+                self.write_error(f'Skipped directory with {entry_count} entries (max: {self.config.max_dir_entries}): {PROTOCOL.lower()}://{self.target}{folder}')
+                # Return empty list, effectively skipping this directory
+                return []
+                
+            # Return the entries if count is within limits
+            return entries
+            
         except Exception as e:
             if r < self.config.retry_count:
                 sleep(self.config.delay_before_retry)
