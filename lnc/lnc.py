@@ -3,6 +3,7 @@ import json
 import yaml
 import os
 from rich.console import Console
+from lnc import __version__
 from lnc.multi.multi_thread_manager import MultiThreadManager
 from lnc.multi.generator import *
 from os.path import exists
@@ -66,16 +67,21 @@ default_values={
             r"(?:5[0678][\d\s]{2}|6304|6390|67[\d\s]{2})[\d\s]{8,15}"
         ]
     },
-    "add-filename-to-analyze": True,
-    "check_binarys": True,
+    "add_filename_to_analyze": True,
+    "check_binaries": True,
     "take_before": 50,
     "take_after": 50,
     "thread": 10,
-    "timeout": 0.1,
+    "timeout": 2,
     "disable_output_end_prefix": False,
     "ignore_folder_name_contains": ["audio", "bin", "boot", "dev", "etc", "lib", "lib64", "lost+found", "media", "opt", "proc", "run", "sbin", "srv", "sys", "tmp", "usr", "snap", "swapfile", "vmlinuz"],
     "ftp_port": 21,
-    "max_dir_entries": 1000
+    "max_dir_entries": 1000,
+    "network_accessibility_check": True,
+    "auto_resume_on_recovery": True,
+    "error_threshold_for_check": 10,
+    "accessibility_check_interval": 30,
+    "accessibility_check_timeout": 5
 }
 
 def parse_args():
@@ -182,20 +188,23 @@ def parse_args():
 
     def add_analyze_args(parser):
         analyze_group = parser.add_argument_group('Analyze settings')
-        analyze_group.add_argument('--take_after',dest="take-after", type=int, 
+        analyze_group.add_argument('--take_after',dest="take_after", type=int, 
                                   help=f'Number of characters to include after match (default: {default_values["take_after"]})')
-        analyze_group.add_argument('--take_before',dest="take-before", type=int, 
+        analyze_group.add_argument('--take_before',dest="take_before", type=int, 
                                   help=f'Number of characters to include before match (default: {default_values["take_before"]})')
         analyze_group.add_argument('--patterns', type=str, help='JSON string of patterns')
-        analyze_group.add_argument('--add_filename_to_analyze', dest='add-filename-to-analyze', action='store_true', help='Add filename to analyze')
-        analyze_group.add_argument('--always_keep_extracted_files', dest='always-keep-extracted-files', action='store_true', help='Always keep extracted files')
-        analyze_group.add_argument('--keep_extracted_files', dest='keep-extracted-files', action='store_true', help='Keep if match found')
+        analyze_group.add_argument('--add_filename_to_analyze', dest='add_filename_to_analyze', action='store_true', help='Add filename to analyze')
+        analyze_group.add_argument('--always_keep_extracted_files', dest='always_keep_extracted_files', action='store_true', help='Always keep extracted files')
+        analyze_group.add_argument('--keep_extracted_files', dest='keep_extracted_files', action='store_true', help='Keep if match found')
         
 
     parser = argparse.ArgumentParser(
         description="LNC - Locale Network Crawler",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
+    
+    # Add version argument
+    parser.add_argument('--version', action='version', version=f'LNC {__version__}')
     subparsers = parser.add_subparsers(dest='command', help='Sub-command help', required=True)
     
 

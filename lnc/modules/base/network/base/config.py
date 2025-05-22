@@ -3,7 +3,7 @@ from lnc.modules.base.config import Config as ConfigBase
 MAX_CONNECTION_TO_HOST = 3
 RETRY_COUNT = 3
 DELAY_BEFORE_RETRY = 0.01
-TIMEOUT = 5
+TIMEOUT = 2
 PORT = None
 class Config(ConfigBase):
     max_connection_to_host:int = None

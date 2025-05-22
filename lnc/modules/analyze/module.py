@@ -50,7 +50,7 @@ class Analyze(ModuleBase):
     
     def read_file(self, file: File):
         # Skip binary files if configured
-        if hasattr(self.config, 'check_binarys') and self.config.check_binarys and self.is_binary(file.local_path):
+        if hasattr(self.config, 'check_binaries') and self.config.check_binaries and self.is_binary(file.local_path):
             # Log that we're skipping a binary file
             self.console.print(f"[yellow][*] Skipping binary file: {file.path}[/yellow]")
             return

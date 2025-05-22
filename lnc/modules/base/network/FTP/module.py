@@ -3,6 +3,7 @@ from lnc.modules.base.network.base.module import Network_Module
 from ftplib import FTP, error_perm
 from rich.console import Console
 from time import sleep
+from lnc.multi.accessibility_manager import AccessibilityManager
 
 class FTP_Module(Network_Module):
     config: Config = None
@@ -45,6 +46,19 @@ class FTP_Module(Network_Module):
             self.write_error(f"Unable to login to ftp://{self.target}:{self.config.port}. Error: {str(e)}")
             return False
         super().connect()
+        
+        # Record successful connection for accessibility checking
+        checker = AccessibilityManager.get_instance()
+        if checker:
+            checker.record_success(
+                self.target, 
+                self.config.port, 
+                'ftp',
+                username=self.username,
+                password=self.password,
+                domain=self.domain
+            )
+        
         return True
 
     def close(self):

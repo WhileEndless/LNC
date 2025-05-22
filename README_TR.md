@@ -8,7 +8,9 @@ LNC, SMB paylaşımları ve FTP sunucuları gibi yerel ağ kaynaklarından veri 
 2. **SMB/FTP Paylaşım Tarama**: Kullanıcı tanımlı filtre ve desenlere göre SMB ve FTP paylaşımlarını özyinelemeli olarak tarayarak dosya ve dizinleri çıkarabilir.
 3. **SMB/FTP Dosya İndirme**: SMB ve FTP paylaşımlarından belirli dosya ve dizinleri, dosya türü ve desenlerine göre filtreleyerek indirebilir.
 4. **SMB/FTP Dosya Analizi**: İndirilen dosyaları analiz ederek şifreler, kredi kartı numaraları ve TCKN (Türkiye Cumhuriyeti Kimlik Numarası) gibi hassas bilgileri çıkarabilir.
-5. **Gelişmiş Yapılandırma**: Kimlik doğrulama bilgileri, yeniden deneme ayarları, çıktı dosyası yönetimi ve çeşitli filtre ve desenler için kapsamlı yapılandırma seçenekleri sunar.
+5. **Ağ Dayanıklılığı ve Otomatik Kurtarma**: Gelişmiş ağ hatası algılama ve otomatik duraklatma/devam ettirme işlevselliği. Başarısız işlemler, ağ bağlantısı geri geldiğinde otomatik olarak yeniden denenir.
+6. **Çiftleme Önleme**: Tarama işlemleri sırasında işlenen dosyaların akıllı takibi, kesintiler sonrası işlemler devam ettirildiğinde çiftleme işlemeyi önler.
+7. **Gelişmiş Yapılandırma**: Kimlik doğrulama bilgileri, yeniden deneme ayarları, çıktı dosyası yönetimi ve çeşitli filtre ve desenler için kapsamlı yapılandırma seçenekleri sunar.
 
 ## Kurulum
 
@@ -188,6 +190,74 @@ ignore_folder_name_contains:
    ```
 
 Burada `config.yaml`, özel yapılandırma dosyanızın yoludur.
+
+### Temel Yapılandırma Seçenekleri
+
+#### Ağ Erişilebilirliği ve Kurtarma
+- `network_accessibility_check`: Otomatik ağ hatası algılamayı etkinleştir/devre dışı bırak (varsayılan: True)
+- `auto_resume_on_recovery`: Ağ geri geldiğinde işlemleri otomatik olarak devam ettir (varsayılan: True)
+- `error_threshold_for_check`: Ağ kontrolünü tetiklemeden önceki ardışık hata sayısı (varsayılan: 10)
+- `accessibility_check_interval`: Ağ kurtarma kontrolleri arasındaki saniye (varsayılan: 30)
+- `accessibility_check_timeout`: Ağ erişilebilirlik testleri için zaman aşımı (varsayılan: 5)
+
+#### Performans ve Thread Yönetimi
+- `thread`: Paralel işleme için worker thread sayısı (varsayılan: 10)
+- `max_parallel_job`: Hostlara maksimum paralel bağlantı (varsayılan: 5)
+- `max_dir_entries`: Bu sayıdan fazla girişi olan dizinleri atla (varsayılan: 1000)
+
+#### Dosya İşleme
+- `check_binaries`: Analiz sırasında binary dosyaları atla (varsayılan: True)
+- `max_download_size`: İndirilecek maksimum dosya boyutu MB cinsinden (varsayılan: 10)
+- `always_download`: Filtrelerden bağımsız olarak her zaman indirilecek dosyalar için regex desenleri
+
+#### Desen Eşleştirme
+- `patterns`: Hassas veri algılama için özel regex desenleri (TCKN, credit_card, password)
+- `take_before`: Desen eşleşmesinden önce yakalanacak karakter sayısı (varsayılan: 50)
+- `take_after`: Desen eşleşmesinden sonra yakalanacak karakter sayısı (varsayılan: 50)
+
+## Ağ Dayanıklılığı Özellikleri
+
+LNC, ağ kesintilerini otomatik olarak ele alan gelişmiş ağ dayanıklılığı yetenekleri içerir:
+
+### Otomatik Hata Algılama
+- İşlemler sırasında ağ hatalarını izler
+- Hata eşiği aşıldığında otomatik olarak algılar
+- Son başarılı bağlantı parametrelerini kullanarak ağ bağlantısını test eder
+
+### Akıllı Kurtarma
+- **Otomatik Devam Modu**: Ağ geri geldiğinde işlemleri otomatik olarak devam ettirir
+- **Manuel Mod**: İşlemleri devam ettirmeden önce kullanıcı onayı ister
+- **Başarısız Öğe Yeniden Deneme**: Ağ kurtarımından sonra başarısız işlemleri otomatik olarak yeniden dener
+
+### Çiftleme Önleme
+- Tarama işlemleri sırasında işlenen dosyaları takip eder
+- Kesintiler sonrası işlemler devam ettirildiğinde çiftleme işlemeyi önler
+- Durumu geçici takip dosyalarında tutar (`.lnc_crawl_tracking_*.json`)
+
+### Kullanım Örnekleri
+
+#### Otomatik Kurtarmalı Temel SMB Analizi
+```bash
+lnc smb analyze -t 192.168.1.100 -u administrator -p password
+```
+Çalıştırma sırasında ağ hatası olursa, LNC otomatik olarak durur, ağ kurtarımını izler ve kaldığı yerden devam eder.
+
+#### Manuel Kurtarma Modu
+```yaml
+# config.yaml
+auto_resume_on_recovery: False
+```
+```bash
+lnc smb crawl -t 192.168.1.100 -u user -p pass -c config.yaml
+```
+Ağ hatası olursa, LNC devam etmeden önce kullanıcı onayı ister.
+
+#### Ağ İzlemeyi Devre Dışı Bırakma
+```yaml
+# config.yaml
+network_accessibility_check: False
+```
+Otomatik ağ izleme ve yeniden deneme işlevselliğini devre dışı bırakır.
 
 ## Lisans
 

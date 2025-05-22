@@ -8,6 +8,7 @@ from os import _exit
 from rich.prompt import Prompt
 from rich.live import Live
 from lnc.multi.base.handler import Handler
+from lnc.multi.accessibility_manager import AccessibilityManager
 from time import time
 
 class MultiThreadManagerError(Exception):
@@ -67,6 +68,34 @@ class MultiThreadManager:
         self.process_name = process_name
         self.interrupted = Event()
         self.live = None
+        self.retry_thread = None
+        self.retry_queue = Queue()
+        
+        # Initialize accessibility checker
+        self.accessibility_checker = AccessibilityManager.initialize(config, console)
+        
+        # Set up crawl tracking if this is a crawl operation
+        if self.accessibility_checker and 'crawl' in process_name.lower():
+            import uuid
+            operation_id = str(uuid.uuid4())
+            self.accessibility_checker.set_crawl_tracking_file(operation_id)
+        
+        # Determine operation type from process name
+        self.operation_type = self._determine_operation_type(process_name)
+    
+    def _determine_operation_type(self, process_name: str) -> str:
+        """Determine the operation type from process name"""
+        process_lower = process_name.lower()
+        if 'share' in process_lower:
+            return 'share_list'
+        elif 'crawl' in process_lower:
+            return 'file_crawl'
+        elif 'download' in process_lower:
+            return 'download'
+        elif 'analyz' in process_lower:
+            return 'analyze'
+        else:
+            return 'unknown'
         self.current_progress = 0
         self.total_handled = 0
         self.custom_columns = custom_columns or []
@@ -240,12 +269,19 @@ class MultiThreadManager:
         with self.live:
             self.initialize_task()
             self.start_threads()
+            self.start_retry_thread()
             self.start_filler_threads()
             self.wait_for_filler_completion()
             self.wait_for_queue_completion()
             self.stop_event.set()
             for thread in self.threads:
                 thread.join()
+            if self.retry_thread:
+                self.retry_thread.join()
+        
+        # Cleanup accessibility checker
+        AccessibilityManager.cleanup()
+        
         if self.before_force_stop:
             self.before_force_stop[0](**self.before_force_stop[1])
     def initialize_task(self):
@@ -292,7 +328,18 @@ class MultiThreadManager:
             handler = self.handler(self.console, self.progress, self.task)
             while not self.stop_event.is_set() or not queue.empty():
                 try:
+                    # Check if we should pause due to network issues
+                    if self.accessibility_checker:
+                        self.accessibility_checker.wait_if_paused()
+                    
                     data = queue.get(timeout=1)
+                    
+                    # For crawl operations, check if item was already processed
+                    if self.accessibility_checker and 'crawl' in self.process_name.lower() and hasattr(data, 'id'):
+                        if self.accessibility_checker.is_item_processed(str(data.id)):
+                            queue.task_done()
+                            continue
+                    
                     handler_result = handler.run(data, self.config)
                     
                     # Update the total_handled value
@@ -317,6 +364,23 @@ class MultiThreadManager:
                     continue
                 except Exception as e:
                     self.console.print(f"[red]Error processing data: {e}[/red]")
+                    # Record network errors with failed item
+                    if self.accessibility_checker and any(err in str(e).lower() for err in ['connection', 'timeout', 'network', 'refused']):
+                        # Extract target info from data if available
+                        target = None
+                        port = None
+                        if hasattr(data, 'target'):
+                            target = data.target
+                        elif isinstance(data, dict) and 'target' in data:
+                            target = data['target']
+                        
+                        self.accessibility_checker.record_error(
+                            failed_item=data,
+                            operation_type=self.operation_type,
+                            error_msg=str(e),
+                            target=target,
+                            port=port
+                        )
                     queue.task_done()
                     # Don't re-raise the exception, continue processing
                     continue
@@ -329,6 +393,34 @@ class MultiThreadManager:
                 except Exception as cleanup_error:
                     self.console.print(f"[red]Error cleaning up handler: {cleanup_error}[/red]")
                     pass
+    
+    def start_retry_thread(self):
+        """Start the retry thread that monitors for failed items to retry"""
+        if self.accessibility_checker:
+            self.retry_thread = Thread(target=self.retry_worker, daemon=True)
+            self.retry_thread.start()
+    
+    def retry_worker(self):
+        """Worker thread that handles retrying failed items"""
+        while not self.stop_event.is_set():
+            try:
+                # Check if we're resumed from a pause
+                if self.accessibility_checker and not self.accessibility_checker.is_paused:
+                    failed_items = self.accessibility_checker.get_failed_items()
+                    if failed_items:
+                        self.console.print(f"[yellow][*] Processing {len(failed_items)} failed items for retry[/yellow]")
+                        for item in failed_items:
+                            # Distribute to appropriate worker queue
+                            if self.worker_queues:
+                                # Round-robin distribution
+                                queue_idx = item.retry_count % len(self.worker_queues)
+                                self.worker_queues[queue_idx].put(item.data)
+                
+                # Check every 5 seconds
+                self.stop_event.wait(5)
+            except Exception as e:
+                self.console.print(f"[red]Error in retry worker: {e}[/red]")
+    
     def restart(self):
         """
         Restarts the processing workflow after an interruption.

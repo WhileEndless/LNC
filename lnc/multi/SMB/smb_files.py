@@ -1,6 +1,7 @@
 from lnc.modules.crawl.SMB.files.config import Config
 from lnc.modules.crawl.SMB.files.module import SMB_Files, Share
 from lnc.multi.base.handler import Handler
+from lnc.multi.accessibility_manager import AccessibilityManager
 from rich.console import Console
 
 class Handler(Handler):
@@ -32,6 +33,11 @@ class Handler(Handler):
             for file in self.module.run(Share.from_dict(share)):
                 if not self.config.disable_output_text:
                     self.console.print(f"[green][+] File: {file.url}[/green] [blue]Size: {file.size}[/blue]")
+                
+                # Mark item as processed for duplicate prevention
+                checker = AccessibilityManager.get_instance()
+                if checker:
+                    checker.mark_item_processed(file.url)
                 
                 # Only update progress when total actually changes
                 if previous_total != SMB_Files.total:

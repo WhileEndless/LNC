@@ -8,7 +8,9 @@ LNC is a powerful tool designed to facilitate the exploration and extraction of 
 2. **SMB/FTP Share Crawling**: The tool can recursively crawl through SMB and FTP shares, extracting files and directories based on user-defined filters and patterns.
 3. **SMB/FTP File Download**: LNC can download specific files or directories from SMB and FTP shares, allowing filtering based on file types and patterns.
 4. **SMB/FTP File Analysis**: The tool can analyze downloaded files, extracting sensitive information such as passwords, credit card numbers, and TCKN (Turkish Citizenship ID) numbers.
-5. **Robust Configuration**: LNC provides a comprehensive set of configuration options, including authentication credentials, retry settings, output file management, and various filters and patterns.
+5. **Network Resilience & Auto-Recovery**: Advanced network failure detection with automatic pause/resume functionality. Failed operations are automatically retried when network connectivity is restored.
+6. **Duplicate Prevention**: Intelligent tracking of processed files during crawl operations prevents duplicate processing when operations are resumed after interruptions.
+7. **Robust Configuration**: LNC provides a comprehensive set of configuration options, including authentication credentials, retry settings, output file management, and various filters and patterns.
 
 ## Installation
 
@@ -113,8 +115,9 @@ enable_error_output: False
 max_parallel_job: 3
 retry_count: 3
 delay_before_retry: 0.01
-timeout: 0.1
+timeout: 2
 smb_port: 445
+ftp_port: 21
 smb_shares_check_read: True
 smb_shares_check_write: True
 smb_files_ignore_shares:
@@ -150,14 +153,20 @@ patterns:
     - "parola"
     - "sifre"
     - "contentHash"
-add_filename_to_analyz: True
-check_binarys: True
+check_binaries: True
 take_before: 50
 take_after: 50
-keep-extracted-files: False
-always-keep-extracted-files: False
-add-filename-to-analyze: True
-thread: 20
+keep_extracted_files: False
+always_keep_extracted_files: False
+add_filename_to_analyze: True
+thread: 10
+max_dir_entries: 1000
+# Network accessibility check settings
+network_accessibility_check: True
+auto_resume_on_recovery: True
+error_threshold_for_check: 10
+accessibility_check_interval: 30
+accessibility_check_timeout: 5
 ignore_folder_name_contains:
   - "audio"
   - "bin"
@@ -188,6 +197,74 @@ To use a custom configuration file, run the following command:
    ```
 
 Where `config.yaml` is the path to your custom configuration file.
+
+### Key Configuration Options
+
+#### Network Accessibility & Recovery
+- `network_accessibility_check`: Enable/disable automatic network failure detection (default: True)
+- `auto_resume_on_recovery`: Automatically resume operations when network is restored (default: True)
+- `error_threshold_for_check`: Number of consecutive errors before triggering network check (default: 10)
+- `accessibility_check_interval`: Seconds between network recovery checks (default: 30)
+- `accessibility_check_timeout`: Timeout for network accessibility tests (default: 5)
+
+#### Performance & Threading
+- `thread`: Number of worker threads for parallel processing (default: 10)
+- `max_parallel_job`: Maximum parallel connections to hosts (default: 5)
+- `max_dir_entries`: Skip directories with more than this many entries (default: 1000)
+
+#### File Processing
+- `check_binaries`: Skip binary files during analysis (default: True)
+- `max_download_size`: Maximum file size to download in MB (default: 10)
+- `always_download`: Regex patterns for files to always download regardless of filters
+
+#### Pattern Matching
+- `patterns`: Custom regex patterns for sensitive data detection (TCKN, credit_card, password)
+- `take_before`: Characters to capture before pattern match (default: 50)
+- `take_after`: Characters to capture after pattern match (default: 50)
+
+## Network Resilience Features
+
+LNC includes advanced network resilience capabilities that automatically handle network interruptions:
+
+### Automatic Failure Detection
+- Monitors network errors during operations
+- Automatically detects when error threshold is exceeded
+- Tests network connectivity using the last successful connection parameters
+
+### Smart Recovery
+- **Auto-Resume Mode**: Automatically resumes operations when network is restored
+- **Manual Mode**: Prompts user for confirmation before resuming
+- **Failed Item Retry**: Automatically retries failed operations after network recovery
+
+### Duplicate Prevention
+- Tracks processed files during crawl operations
+- Prevents duplicate processing when operations resume after interruptions
+- Maintains state in temporary tracking files (`.lnc_crawl_tracking_*.json`)
+
+### Usage Examples
+
+#### Basic SMB Analysis with Auto-Recovery
+```bash
+lnc smb analyze -t 192.168.1.100 -u administrator -p password
+```
+If network fails during execution, LNC will automatically pause, monitor network recovery, and resume from where it left off.
+
+#### Manual Recovery Mode
+```yaml
+# config.yaml
+auto_resume_on_recovery: False
+```
+```bash
+lnc smb crawl -t 192.168.1.100 -u user -p pass -c config.yaml
+```
+If network fails, LNC will prompt for user confirmation before resuming.
+
+#### Disable Network Monitoring
+```yaml
+# config.yaml
+network_accessibility_check: False
+```
+Disables automatic network monitoring and retry functionality.
 
 ## License
 

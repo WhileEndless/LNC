@@ -27,7 +27,7 @@ TAKE_BEFORE = 50
 KEEP_EXTRACTED_FILES = False
 ALWAYS_KEEP_EXTRACTED_FILES = False
 ADD_FILENAME_TO_ANALYZE = True
-CHECK_BINARYS = True
+CHECK_BINARIES = True
 
 class Config(ConfigBase):
     patterns:dict = None
@@ -36,7 +36,7 @@ class Config(ConfigBase):
     keep_extracted_files:bool = False
     always_keep_extracted_files:bool = False
     add_filename_to_analyze:bool = True
-    check_binarys:bool = True
+    check_binaries:bool = True
     def __init__(self):
         super().__init__()
         self.patterns={}
@@ -45,7 +45,7 @@ class Config(ConfigBase):
         self.keep_extracted_files = KEEP_EXTRACTED_FILES
         self.always_keep_extracted_files = ALWAYS_KEEP_EXTRACTED_FILES
         self.add_filename_to_analyze = ADD_FILENAME_TO_ANALYZE
-        self.check_binarys = CHECK_BINARYS
+        self.check_binaries = CHECK_BINARIES
         
         for key in PATTERNS:
             self.patterns[key]={}
@@ -64,12 +64,12 @@ class Config(ConfigBase):
             config.patterns[key]["pattern"] = compile_regex_patterns(patterns[key], config)
             config.patterns[key]["lock"] = Lock()
             config.patterns[key]["total"] = 0
-        config.take_after = config_dict.get("take-after",TAKE_AFTER)
-        config.take_before = config_dict.get("take-before",TAKE_BEFORE)
-        config.keep_extracted_files = config_dict.get("keep-extracted-files",KEEP_EXTRACTED_FILES)
-        config.always_keep_extracted_files = config_dict.get("always-keep-extracted-files",ALWAYS_KEEP_EXTRACTED_FILES)
-        config.add_filename_to_analyze = config_dict.get("add-filename-to-analyze",ADD_FILENAME_TO_ANALYZE)
-        config.check_binarys = config_dict.get("check_binarys",CHECK_BINARYS)
+        config.take_after = config_dict.get("take_after",TAKE_AFTER)
+        config.take_before = config_dict.get("take_before",TAKE_BEFORE)
+        config.keep_extracted_files = config_dict.get("keep_extracted_files",KEEP_EXTRACTED_FILES)
+        config.always_keep_extracted_files = config_dict.get("always_keep_extracted_files",ALWAYS_KEEP_EXTRACTED_FILES)
+        config.add_filename_to_analyze = config_dict.get("add_filename_to_analyze",ADD_FILENAME_TO_ANALYZE)
+        config.check_binaries = config_dict.get("check_binaries",CHECK_BINARIES)
         return config
 
 def compile_regex_patterns(patterns: List[str], config:Config) -> re.Pattern:

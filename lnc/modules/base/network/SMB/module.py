@@ -3,6 +3,7 @@ from lnc.modules.base.network.base.module import Network_Module
 from impacket.smbconnection import SMBConnection
 from rich.console import Console
 from time import sleep
+from lnc.multi.accessibility_manager import AccessibilityManager
 
 class SMB_Module(Network_Module):
     config: Config = None
@@ -43,6 +44,19 @@ class SMB_Module(Network_Module):
             self.write_error(f"Unable to login to smb://{self.target}:{self.config.port}")
             return False
         super().connect()
+        
+        # Record successful connection for accessibility checking
+        checker = AccessibilityManager.get_instance()
+        if checker:
+            checker.record_success(
+                self.target, 
+                self.config.port, 
+                'smb',
+                username=self.username,
+                password=self.password,
+                domain=self.domain
+            )
+        
         return True
 
     def close(self):
