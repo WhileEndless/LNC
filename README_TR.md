@@ -71,6 +71,30 @@ Hedef sistemdeki mevcut SMB paylaşımlarını listelemek için aşağıdaki kom
 
 Bu komut, hedef sistemdeki erişilebilir SMB paylaşımlarını ve erişim izinlerini listeler.
 
+### Kimlik Doğrulama Seçenekleri
+
+LNC, SMB bağlantıları için birden fazla kimlik doğrulama yöntemini destekler:
+
+#### Parola ile Kimlik Doğrulama (Varsayılan)
+   ```bash
+   lnc smb share -t 192.168.1.100 -u kullaniciAdi -p parola
+   ```
+
+#### Hash ile Kimlik Doğrulama (Pass-the-Hash)
+   ```bash
+   # Hem LM hem de NT hash'leri kullanarak
+   lnc smb share -t 192.168.1.100 -u Administrator --hashes aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c
+   
+   # Sadece NT hash kullanarak
+   lnc smb share -t 192.168.1.100 -u Administrator --hashes 8846f7eaee8fb117ad06bdd830b7586c
+   ```
+
+#### Yerel Kimlik Doğrulama
+   ```bash
+   # Yerel kimlik doğrulamayı zorla (domain'i yoksay)
+   lnc smb share -t 192.168.1.100 -u Administrator -p parola --local-auth
+   ```
+
 ### SMB/FTP Paylaşım Tarama
 
 SMB veya FTP paylaşımlarını özyinelemeli olarak taramak ve kullanıcı tanımlı filtre ve desenlere göre dosya ve dizinleri çıkarmak için aşağıdaki komutu kullanın:

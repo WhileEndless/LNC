@@ -10,13 +10,17 @@ class SMB_Module(Network_Module):
     username:str=None
     password:str=None
     domain:str=None
+    lmhash:str=None
+    nthash:str=None
     connection:SMBConnection = None
     
-    def __init__(self, config: Config, console:Console, target: str, username:str=None,password:str=None,domain:str=None) -> None:
+    def __init__(self, config: Config, console:Console, target: str, username:str=None,password:str=None,domain:str=None,lmhash:str=None,nthash:str=None) -> None:
         super().__init__(config, console, target)
         self.username=username
         self.password=password
         self.domain=domain
+        self.lmhash=lmhash
+        self.nthash=nthash
         self.connection = None
         self.console=console
 
@@ -39,9 +43,17 @@ class SMB_Module(Network_Module):
             username = '' if self.username == None else self.username
             password = '' if self.password == None else self.password
             domain = '' if self.domain == None else self.domain
-            self.connection.login(username,password,domain)
-        except:
-            self.write_error(f"Unable to login to smb://{self.target}:{self.config.port}")
+            lmhash = '' if self.lmhash == None else self.lmhash
+            nthash = '' if self.nthash == None else self.nthash
+            
+            # Use hash authentication if hashes are provided
+            if lmhash or nthash:
+                self.connection.login(username, '', domain, lmhash, nthash)
+            else:
+                self.connection.login(username, password, domain)
+        except Exception as e:
+            auth_method = "hash" if (self.lmhash or self.nthash) else "password"
+            self.write_error(f"Unable to login to smb://{self.target}:{self.config.port} using {auth_method} authentication. Error: {str(e)}")
             return False
         super().connect()
         
@@ -54,7 +66,9 @@ class SMB_Module(Network_Module):
                 'smb',
                 username=self.username,
                 password=self.password,
-                domain=self.domain
+                domain=self.domain,
+                lmhash=self.lmhash,
+                nthash=self.nthash
             )
         
         return True

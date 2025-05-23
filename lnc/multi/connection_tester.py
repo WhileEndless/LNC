@@ -21,6 +21,8 @@ class ConnectionInfo:
     username: Optional[str] = None
     password: Optional[str] = None
     domain: Optional[str] = None
+    lmhash: Optional[str] = None
+    nthash: Optional[str] = None
     timeout: int = 5
 
 
@@ -78,12 +80,22 @@ class ConnectionTester:
             username = conn_info.username or ''
             password = conn_info.password or ''
             domain = conn_info.domain or ''
+            lmhash = conn_info.lmhash or ''
+            nthash = conn_info.nthash or ''
             
-            if conn.login(username, password, domain):
-                conn.logoff()
-                return True, ""
+            # Use hash authentication if provided
+            if lmhash or nthash:
+                if conn.login(username, '', domain, lmhash, nthash):
+                    conn.logoff()
+                    return True, ""
+                else:
+                    return False, "SMB hash authentication failed"
             else:
-                return False, "SMB authentication failed"
+                if conn.login(username, password, domain):
+                    conn.logoff()
+                    return True, ""
+                else:
+                    return False, "SMB authentication failed"
                 
         except Exception as e:
             return False, f"SMB error: {str(e)}"

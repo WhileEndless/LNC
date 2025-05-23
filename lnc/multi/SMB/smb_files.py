@@ -20,7 +20,10 @@ class Handler(Handler):
         if config_dict!=self.config_dict or target!=self.target:
             self.target=target
             self.config=Config.from_dict(config_dict)
-            self.module=SMB_Files(config=self.config, console=self.console, target=target, username=config_dict['username'], password=config_dict['password'], domain=config_dict['domain'])
+            self.module=SMB_Files(config=self.config, console=self.console, target=target, 
+                                 username=config_dict['username'], password=config_dict['password'], 
+                                 domain=config_dict['domain'], lmhash=config_dict.get('lmhash'), 
+                                 nthash=config_dict.get('nthash'))
             self.config_dict=config_dict
             if not self.module.connect():
                 self.connection_status=False

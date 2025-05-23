@@ -71,6 +71,30 @@ To list and enumerate available SMB shares on a target system, use the following
 
 This will list all the accessible SMB shares on the target system, including their access permissions.
 
+### Authentication Options
+
+LNC supports multiple authentication methods for SMB connections:
+
+#### Password Authentication (Default)
+   ```bash
+   lnc smb share -t 192.168.1.100 -u myUsername -p myPassword
+   ```
+
+#### Hash Authentication (Pass-the-Hash)
+   ```bash
+   # Using both LM and NT hashes
+   lnc smb share -t 192.168.1.100 -u Administrator --hashes aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c
+   
+   # Using only NT hash
+   lnc smb share -t 192.168.1.100 -u Administrator --hashes 8846f7eaee8fb117ad06bdd830b7586c
+   ```
+
+#### Local Authentication
+   ```bash
+   # Force local authentication (ignore domain)
+   lnc smb share -t 192.168.1.100 -u Administrator -p myPassword --local-auth
+   ```
+
 ### SMB/FTP Share Crawling
 
 To recursively crawl through SMB or FTP shares and extract files and directories based on user-defined filters and patterns, use the following command:

@@ -39,8 +39,8 @@ class SMB_Shares(SMB_Module):
     total_lock:Lock = Lock()
     config: Config = None
     
-    def __init__(self, config: Config, console:Console, target: str, username: str = None, password: str = None, domain: str = None) -> None:
-        super().__init__(config, console, target, username, password, domain)
+    def __init__(self, config: Config, console:Console, target: str, username: str = None, password: str = None, domain: str = None, lmhash: str = None, nthash: str = None) -> None:
+        super().__init__(config, console, target, username, password, domain, lmhash, nthash)
     
     def list_shares(self,r=0):
         try:

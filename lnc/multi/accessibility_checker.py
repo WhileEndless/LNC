@@ -40,6 +40,8 @@ class SuccessfulConnection:
     username: Optional[str] = None
     password: Optional[str] = None
     domain: Optional[str] = None
+    lmhash: Optional[str] = None
+    nthash: Optional[str] = None
 
 
 class AccessibilityChecker:
@@ -119,7 +121,8 @@ class AccessibilityChecker:
             return item_id in self.processed_items
     
     def record_success(self, target: str, port: int, operation_type: str, 
-                      username: str = None, password: str = None, domain: str = None):
+                      username: str = None, password: str = None, domain: str = None,
+                      lmhash: str = None, nthash: str = None):
         """Record a successful connection for later verification"""
         if not self.enabled:
             return
@@ -131,7 +134,9 @@ class AccessibilityChecker:
             operation_type=operation_type,
             username=username,
             password=password,
-            domain=domain
+            domain=domain,
+            lmhash=lmhash,
+            nthash=nthash
         )
         
         # Reset error count on success
@@ -211,6 +216,8 @@ class AccessibilityChecker:
             username=conn.username,
             password=conn.password,
             domain=conn.domain,
+            lmhash=conn.lmhash,
+            nthash=conn.nthash,
             timeout=self.check_timeout
         )
         

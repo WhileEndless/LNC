@@ -31,8 +31,8 @@ class SMB_Files(SMB_Module):
     total:int = 0
     total_lock:Lock = Lock()
     config: Config = None
-    def __init__(self, config: Config, console:Console, target: str, username: str = None, password: str = None, domain: str = None) -> None:
-        super().__init__(config, console, target, username, password, domain)
+    def __init__(self, config: Config, console:Console, target: str, username: str = None, password: str = None, domain: str = None, lmhash: str = None, nthash: str = None) -> None:
+        super().__init__(config, console, target, username, password, domain, lmhash, nthash)
     def run(self, share:Share, folder:str=''):
         if share.name.lower() in self.config.ignore_shares:
             self.console.print(f'[yellow][*] Ignoring share {PROTOCOL.lower()}://{self.target}/{share.name}[/yellow]')

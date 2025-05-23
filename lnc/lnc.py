@@ -18,6 +18,10 @@ default_values={
     "username": None,
     "password": None,
     "domain": None,
+    "local_auth": False,
+    "hashes": None,
+    "lmhash": None,
+    "nthash": None,
     "enable_error_output": False,
     "output_end": None,
     "output": "output",
@@ -107,6 +111,10 @@ def parse_args():
         auth_group.add_argument('-u', '--username', type=str, help='Username for authentication')
         auth_group.add_argument('-p', '--password', type=str, help='Password for authentication')
         auth_group.add_argument('-d', '--domain', type=str, help='Domain for authentication')
+        auth_group.add_argument('--local-auth', action='store_true', dest='local_auth', 
+                                help='Force local authentication (ignore domain)')
+        auth_group.add_argument('--hashes', type=str, dest='hashes',
+                                help='NTLM hashes for pass-the-hash authentication (format: LMHASH:NTHASH or NTHASH)')
         return auth_group
     def add_connection_args(parser, parallel:bool=True):
         connection_group = parser.add_argument_group('Connection settings')
@@ -315,6 +323,45 @@ def parse_args():
     merged_config = merge_configs(default_values, config, args)
     merged_config['max_connection_to_host'] = merged_config['max_parallel_job']
     merged_config['output_end'] = str(uuid4())
+    
+    # Parse hash authentication if provided
+    if merged_config.get('hashes'):
+        try:
+            hashes = merged_config['hashes']
+            if ':' in hashes:
+                lmhash, nthash = hashes.split(':', 1)
+                merged_config['lmhash'] = lmhash if lmhash else ''
+                merged_config['nthash'] = nthash if nthash else ''
+            else:
+                # If no colon, assume it's NT hash only
+                merged_config['lmhash'] = ''
+                merged_config['nthash'] = hashes
+            
+            # Validate hash format (should be 32 hex characters or empty for LM)
+            if merged_config['lmhash'] and len(merged_config['lmhash']) != 32:
+                console.print(f'[red]Error:[/red] Invalid LM hash length. Expected 32 hex characters, got {len(merged_config["lmhash"])}')
+                exit(1)
+            if merged_config['nthash'] and len(merged_config['nthash']) != 32:
+                console.print(f'[red]Error:[/red] Invalid NT hash length. Expected 32 hex characters, got {len(merged_config["nthash"])}')
+                exit(1)
+            
+            # Validate hex format
+            try:
+                if merged_config['lmhash']:
+                    int(merged_config['lmhash'], 16)
+                if merged_config['nthash']:
+                    int(merged_config['nthash'], 16)
+            except ValueError:
+                console.print('[red]Error:[/red] Invalid hash format. Hashes must be hexadecimal.')
+                exit(1)
+                
+        except Exception as e:
+            console.print(f'[red]Error:[/red] Failed to parse hashes: {e}')
+            exit(1)
+    
+    # Handle local authentication flag
+    if merged_config.get('local_auth'):
+        merged_config['domain'] = ''  # Force empty domain for local auth
     
     # Fix for SMB/FTP analyze commands - map targets_file to files_file for backward compatibility
     if 'command' in merged_config:

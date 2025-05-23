@@ -82,26 +82,16 @@ class MultiThreadManager:
         
         # Determine operation type from process name
         self.operation_type = self._determine_operation_type(process_name)
-    
-    def _determine_operation_type(self, process_name: str) -> str:
-        """Determine the operation type from process name"""
-        process_lower = process_name.lower()
-        if 'share' in process_lower:
-            return 'share_list'
-        elif 'crawl' in process_lower:
-            return 'file_crawl'
-        elif 'download' in process_lower:
-            return 'download'
-        elif 'analyz' in process_lower:
-            return 'analyze'
-        else:
-            return 'unknown'
+        
+        # Initialize progress tracking variables
         self.current_progress = 0
         self.total_handled = 0
         self.custom_columns = custom_columns or []
         self.task = None
         self.total_stop_event = 0
         self.before_force_stop=before_force_stop
+        
+        # Initialize progress columns
         columns = [
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
@@ -118,6 +108,20 @@ class MultiThreadManager:
         self.progress = Progress(*columns)
 
         signal(SIGINT, self.signal_handler)
+    
+    def _determine_operation_type(self, process_name: str) -> str:
+        """Determine the operation type from process name"""
+        process_lower = process_name.lower()
+        if 'share' in process_lower:
+            return 'share_list'
+        elif 'crawl' in process_lower:
+            return 'file_crawl'
+        elif 'download' in process_lower:
+            return 'download'
+        elif 'analyz' in process_lower:
+            return 'analyze'
+        else:
+            return 'unknown'
 
     def signal_handler(self, signum, frame):
         """
@@ -134,7 +138,7 @@ class MultiThreadManager:
             
             # Clean up worker threads
             self.stop_event.set()
-            for thread in self.worker_threads:
+            for thread in self.threads:
                 thread.join(timeout=1)
             
             # Clean up handlers
