@@ -52,6 +52,7 @@ class FTP_Files(FTP_Module):
     def list_path(self, folder: str, r=0):
         try:
             # Get all entries in the directory
+            # Note: FTP nlst() loads all entries at once - this is a protocol limitation
             entries = self.connection.nlst(folder)
             
             # Count the entries
@@ -60,12 +61,12 @@ class FTP_Files(FTP_Module):
             # Check if the count exceeds the configured maximum
             if entry_count > self.config.max_dir_entries:
                 # Log a message about skipping this directory
-                self.console.print(f'[yellow][*] Skipping directory with too many entries: {PROTOCOL.lower()}://{self.target}{folder} ({entry_count} > {self.config.max_dir_entries})[/yellow]')
-                self.write_error(f'Skipped directory with {entry_count} entries (max: {self.config.max_dir_entries}): {PROTOCOL.lower()}://{self.target}{folder}')
-                # Return empty list, effectively skipping this directory
-                return []
+                self.console.print(f'[yellow][*] Directory has too many entries, processing only first {self.config.max_dir_entries}: {PROTOCOL.lower()}://{self.target}{folder} (total: {entry_count})[/yellow]')
+                self.write_error(f'Directory truncated to {self.config.max_dir_entries} entries (total: {entry_count}): {PROTOCOL.lower()}://{self.target}{folder}')
+                # Return only the first max_dir_entries items
+                return entries[:self.config.max_dir_entries]
                 
-            # Return the entries if count is within limits
+            # Return all entries if count is within limits
             return entries
             
         except Exception as e:

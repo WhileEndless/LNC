@@ -342,13 +342,16 @@ def smb_shares_list(config:dict):
 
 def smb_files_crawl(config:dict):
     from lnc.multi.SMB.smb_files import Handler as SMB_Files_Handler
-    if 'targets_file' in config or 'target' in config:
-        smb_shares_list(config=config)
-        from lnc.modules.crawl.SMB.shares.config import OUTPUT_FILE_NAME_PREFIX
-        if config['disable_output_end_prefix']:
-            config['shares_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
-        else:
-            config['shares_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
+    # Check if shares_file is provided directly
+    if 'shares_file' not in config:
+        # Only run share listing if shares_file is not provided
+        if 'targets_file' in config or 'target' in config:
+            smb_shares_list(config=config)
+            from lnc.modules.crawl.SMB.shares.config import OUTPUT_FILE_NAME_PREFIX
+            if config['disable_output_end_prefix']:
+                config['shares_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
+            else:
+                config['shares_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
     if not exists(config['shares_file']):
         console.print(f"[green][+] No shares found![/green]")
         exit(0)
@@ -358,13 +361,16 @@ def smb_files_crawl(config:dict):
 
 def smb_files_download(config:dict):
     from lnc.multi.SMB.smb_download import Handler as SMB_Download_Handler, Filter
-    if 'targets_file' in config or 'target' in config:
-        smb_files_crawl(config=config)
-        from lnc.modules.crawl.SMB.files.config import OUTPUT_FILE_NAME_PREFIX
-        if config['disable_output_end_prefix']:
-            config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
-        else:
-            config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
+    # Check if files_file is provided directly
+    if 'files_file' not in config:
+        # Only run crawl if files_file is not provided
+        if 'targets_file' in config or 'target' in config:
+            smb_files_crawl(config=config)
+            from lnc.modules.crawl.SMB.files.config import OUTPUT_FILE_NAME_PREFIX
+            if config['disable_output_end_prefix']:
+                config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
+            else:
+                config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
     if not exists(config['files_file']):
         console.print("[green][+] No file found![/green]")
         exit(0)
@@ -409,13 +415,16 @@ def ftp_files_crawl(config:dict):
 
 def ftp_files_download(config:dict):
     from lnc.multi.FTP.ftp_download import Handler as FTP_Download_Handler, Filter
-    if 'targets_file' in config or 'target' in config:
-        ftp_files_crawl(config=config)
-        from lnc.modules.crawl.FTP.config import OUTPUT_FILE_NAME_PREFIX
-        if config['disable_output_end_prefix']:
-            config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
-        else:
-            config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
+    # Check if files_file is provided directly
+    if 'files_file' not in config:
+        # Only run crawl if files_file is not provided
+        if 'targets_file' in config or 'target' in config:
+            ftp_files_crawl(config=config)
+            from lnc.modules.crawl.FTP.config import OUTPUT_FILE_NAME_PREFIX
+            if config['disable_output_end_prefix']:
+                config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}.json"
+            else:
+                config['files_file'] = f"{config['output']}{OUTPUT_FILE_NAME_PREFIX}_{config['output_end']}.json"
     if not exists(config['files_file']):
         console.print("[green][+] No file found![/green]")
         exit(0)
@@ -602,7 +611,7 @@ def print_banner():
    / /   / | / / ____/
   / /   /  |/ / /     
  / /___/ /|  / /___   
-/_____/_/ |_/\\____/     v1.0.0
+/_____/_/ |_/\\____/     v1.1.0
 
         https://github.com/WhileEndless/LNC
     """)

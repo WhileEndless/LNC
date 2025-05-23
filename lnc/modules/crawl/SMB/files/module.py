@@ -67,22 +67,19 @@ class SMB_Files(SMB_Module):
 
     def list_path(self, share:Share, folder:str, r=0):
         try:
-            # Create a list to hold directory entries temporarily so we can count them
-            entries = list(self.connection.listPath(share.name, folder + '/*'))
+            # Use streaming approach to avoid loading all entries at once
+            count = 0
+            path_info = f'{PROTOCOL.lower()}://{self.target}/{share.name}{folder}'
             
-            # Count the entries in this directory
-            entry_count = len(entries)
-            
-            # Check if the count exceeds the configured maximum
-            if entry_count > self.config.max_dir_entries:
-                # Log a message about skipping this directory
-                self.console.print(f'[yellow][*] Skipping directory with too many entries: {PROTOCOL.lower()}://{self.target}/{share.name}{folder} ({entry_count} > {self.config.max_dir_entries})[/yellow]')
-                self.write_error(f'Skipped directory with {entry_count} entries (max: {self.config.max_dir_entries}): {PROTOCOL.lower()}://{self.target}/{share.name}{folder}')
-                # Return without yielding anything, effectively skipping this directory
-                return
+            for file in self.connection.listPath(share.name, folder + '/*'):
+                count += 1
                 
-            # If within limits, yield the entries
-            for file in entries:
+                # Check if we've exceeded the maximum entries limit
+                if count > self.config.max_dir_entries:
+                    self.console.print(f'[yellow][*] Directory has too many entries, stopping at {self.config.max_dir_entries}: {path_info}[/yellow]')
+                    self.write_error(f'Stopped directory listing at {self.config.max_dir_entries} entries (directory may have more): {path_info}')
+                    break
+                
                 yield file
                 
         except Exception as e:
