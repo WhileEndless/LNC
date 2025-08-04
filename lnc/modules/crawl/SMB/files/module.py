@@ -6,6 +6,7 @@ from lnc.modules.base.file import File as FileBase
 from rich.console import Console
 from threading import Lock
 from time import sleep
+from datetime import datetime, timedelta
 
 PROTOCOL = 'SMB'
 
@@ -40,6 +41,8 @@ class SMB_Files(SMB_Module):
         
         for file in self.list_path(share, folder):
             filename:str = file.get_longname()
+            if self.is_older_than(file):
+                continue
             if not file.is_directory() and file.get_filesize() > 0:
                 data = File()
                 data.target = self.target
@@ -77,3 +80,12 @@ class SMB_Files(SMB_Module):
             else:
                 self.write_error(f'Unable to get files from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}. Error: {str(e)}')
                 self.close()
+
+    def is_older_than(self, smb_file) -> bool:
+        try:
+            mtime = smb_file.get_mtime_epoch()
+        except Exception:
+            return False
+        if not mtime:
+            return False
+        return datetime.utcnow() - datetime.utcfromtimestamp(mtime) > timedelta(days=self.config.max_file_age_days)
