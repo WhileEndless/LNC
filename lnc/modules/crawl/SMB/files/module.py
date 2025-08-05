@@ -11,20 +11,25 @@ from datetime import datetime, timedelta
 PROTOCOL = 'SMB'
 
 class File(FileBase):
-    share:Share = None
+    share: Share = None
+    mtime: str = None
+
     def __init__(self) -> None:
         super().__init__()
         self.share = None
-    
+        self.mtime = None
+
     def to_dict(self) -> dict:
         orjdict = super().to_dict()
         orjdict['share'] = self.share.to_dict()
+        orjdict['mtime'] = self.mtime
         return orjdict
-    
+
     @classmethod
-    def from_dict(cls, file_dict:dict):
+    def from_dict(cls, file_dict: dict):
         file = super().from_dict(file_dict)
         file.share = Share.from_dict(file_dict.get('share'))
+        file.mtime = file_dict.get('mtime')
         return file
 
 class SMB_Files(SMB_Module):
@@ -52,10 +57,16 @@ class SMB_Files(SMB_Module):
                 data.size = file.get_filesize()
                 data.share = share
                 data.path = f'{folder}/{filename}'
+                try:
+                    mtime = file.get_mtime_epoch()
+                    if mtime:
+                        data.mtime = datetime.utcfromtimestamp(mtime).isoformat()
+                except Exception:
+                    pass
                 self.write(text_data=data.url,dict_data=data.to_dict())
                 with SMB_Files.total_lock:
                     SMB_Files.total+=1
-                yield data 
+                yield data
 
             elif file.is_directory() and filename not in ['.', '..'] and not any(regex.search(filename.lower()) for regex in self.config.ignore_folder_name_contains):
                 yield from self.run(share, f"{folder}/{filename}")
