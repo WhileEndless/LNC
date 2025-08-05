@@ -3,7 +3,31 @@ from re import compile
 
 OUTPUT_FILE_NAME_PREFIX = "_ftp_files"
 
-IGNORE_FOLDER_NAME_CONTAINS = ["audio", "bin", "boot", "dev", "etc", "lib", "lib64", "lost\\+found", "media", "opt", "proc", "run", "sbin", "srv", "sys", "tmp", "usr", "snap","swapfile","vmlinuz"]
+IGNORE_FOLDER_NAME_CONTAINS = [
+    "audio",
+    "bin",
+    "boot",
+    "dev",
+    "etc",
+    "lib",
+    "lib64",
+    "lost\\+found",
+    "media",
+    "opt",
+    "proc",
+    "run",
+    "sbin",
+    "srv",
+    "sys",
+    "tmp",
+    "usr",
+    "snap",
+    "swapfile",
+    "vmlinuz",
+    "windows",
+    "program files",
+    "programdata",
+]
 MAX_FILE_AGE_DAYS = 365
 
 class Config(ConfigBase):

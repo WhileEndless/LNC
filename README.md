@@ -179,6 +179,9 @@ ignore_folder_name_contains:
   - "snap"
   - "swapfile"
   - "vmlinuz"
+  - "windows"
+  - "program files"
+  - "programdata"
 ```
 
 To use a custom configuration file, run the following command:

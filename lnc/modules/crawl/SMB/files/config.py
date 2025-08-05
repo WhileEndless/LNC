@@ -4,7 +4,31 @@ from re import compile
 CONFIG_PREFIX+="files_"
 OUTPUT_FILE_NAME_PREFIX = "_smb_files"
 
-IGNORE_FOLDER_NAME_CONTAINS = ["audio", "bin", "boot", "dev", "etc", "lib", "lib64", "lost\\+found", "media", "opt", "proc", "run", "sbin", "srv", "sys", "tmp", "usr", "snap","swapfile","vmlinuz"]
+IGNORE_FOLDER_NAME_CONTAINS = [
+    "audio",
+    "bin",
+    "boot",
+    "dev",
+    "etc",
+    "lib",
+    "lib64",
+    "lost\\+found",
+    "media",
+    "opt",
+    "proc",
+    "run",
+    "sbin",
+    "srv",
+    "sys",
+    "tmp",
+    "usr",
+    "snap",
+    "swapfile",
+    "vmlinuz",
+    "windows",
+    "program files",
+    "programdata",
+]
 IGNORE_SHARES = ["ipc$","print$"]
 MAX_FILE_AGE_DAYS = 365
 

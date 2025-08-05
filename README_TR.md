@@ -179,6 +179,9 @@ ignore_folder_name_contains:
   - "snap"
   - "swapfile"
   - "vmlinuz"
+  - "windows"
+  - "program files"
+  - "programdata"
 ```
 
 Özel yapılandırma dosyasını kullanmak için aşağıdaki komutu çalıştırın:
