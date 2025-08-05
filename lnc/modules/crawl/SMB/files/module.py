@@ -84,12 +84,17 @@ class SMB_Files(SMB_Module):
             for file in self.connection.listPath(share.name, folder + '/*'):
                 yield file
         except Exception as e:
+            msg = SMB_Module._exc_to_str(e)
+            if "ProtocolID" in msg:
+                self.write_error(f'Invalid SMB response from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}')
+                self.close()
+                return
             if r < self.config.retry_count:
                 sleep(self.config.delay_before_retry)
                 self.connect()
                 yield from self.list_path(share, folder, r+1)
             else:
-                self.write_error(f'Unable to get files from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}. Error: {str(e)}')
+                self.write_error(f'Unable to get files from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}. Error: {msg}')
                 self.close()
 
     def is_older_than(self, smb_file) -> bool:
