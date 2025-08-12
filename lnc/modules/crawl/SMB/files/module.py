@@ -6,24 +6,30 @@ from lnc.modules.base.file import File as FileBase
 from rich.console import Console
 from threading import Lock
 from time import sleep
+from datetime import datetime, timedelta
 
 PROTOCOL = 'SMB'
 
 class File(FileBase):
-    share:Share = None
+    share: Share = None
+    mtime: str = None
+
     def __init__(self) -> None:
         super().__init__()
         self.share = None
-    
+        self.mtime = None
+
     def to_dict(self) -> dict:
         orjdict = super().to_dict()
         orjdict['share'] = self.share.to_dict()
+        orjdict['mtime'] = self.mtime
         return orjdict
-    
+
     @classmethod
-    def from_dict(cls, file_dict:dict):
+    def from_dict(cls, file_dict: dict):
         file = super().from_dict(file_dict)
         file.share = Share.from_dict(file_dict.get('share'))
+        file.mtime = file_dict.get('mtime')
         return file
 
 class SMB_Files(SMB_Module):
@@ -40,6 +46,8 @@ class SMB_Files(SMB_Module):
         
         for file in self.list_path(share, folder):
             filename:str = file.get_longname()
+            if self.is_older_than(file):
+                continue
             if not file.is_directory() and file.get_filesize() > 0:
                 data = File()
                 data.target = self.target
@@ -49,10 +57,16 @@ class SMB_Files(SMB_Module):
                 data.size = file.get_filesize()
                 data.share = share
                 data.path = f'{folder}/{filename}'
+                try:
+                    mtime = file.get_mtime_epoch()
+                    if mtime:
+                        data.mtime = datetime.utcfromtimestamp(mtime).isoformat()
+                except Exception:
+                    pass
                 self.write(text_data=data.url,dict_data=data.to_dict())
                 with SMB_Files.total_lock:
                     SMB_Files.total+=1
-                yield data 
+                yield data
 
             elif file.is_directory() and filename not in ['.', '..'] and not any(regex.search(filename.lower()) for regex in self.config.ignore_folder_name_contains):
                 yield from self.run(share, f"{folder}/{filename}")
@@ -70,10 +84,24 @@ class SMB_Files(SMB_Module):
             for file in self.connection.listPath(share.name, folder + '/*'):
                 yield file
         except Exception as e:
+            msg = SMB_Module._exc_to_str(e)
+            if "ProtocolID" in msg:
+                self.write_error(f'Invalid SMB response from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}')
+                self.close()
+                return
             if r < self.config.retry_count:
                 sleep(self.config.delay_before_retry)
                 self.connect()
                 yield from self.list_path(share, folder, r+1)
             else:
-                self.write_error(f'Unable to get files from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}. Error: {str(e)}')
+                self.write_error(f'Unable to get files from {PROTOCOL.lower()}://{self.target}/{share.name}{folder}. Error: {msg}')
                 self.close()
+
+    def is_older_than(self, smb_file) -> bool:
+        try:
+            mtime = smb_file.get_mtime_epoch()
+        except Exception:
+            return False
+        if not mtime:
+            return False
+        return datetime.utcnow() - datetime.utcfromtimestamp(mtime) > timedelta(days=self.config.max_file_age_days)

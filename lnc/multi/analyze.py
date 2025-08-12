@@ -84,7 +84,11 @@ class Handler(HandlerBase):
         if path.endswith(".zip") or path.endswith(".rar") or path.endswith(".7z") or path.endswith(".tar") or path.endswith(".tar.gz") or path.endswith(".tar.xz"):
             analayze_files = self.zip.run(file)
         elif path.endswith(".pdf") or path.endswith(".docx") or path.endswith(".xlsx"):
-            analayze_files = [self.doc.run(file)]
+            try:
+                analayze_files = [self.doc.run(file)]
+            except Exception as e:
+                self.console.print(f"[yellow][!] Skipping file {file.path}: {e}[/yellow]")
+                return None
         elif path.endswith(".db") or path.endswith(".sqlite"):
             analayze_files = [self.db.run(file)]
         else:

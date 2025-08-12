@@ -9,6 +9,7 @@ import copy
 from typing import List
 import docx
 import openpyxl
+from openpyxl.utils.exceptions import InvalidFileException
 from lnc.modules.base.file import normalize_path
 import fitz
 
@@ -60,7 +61,10 @@ class DOC(ExtrackBase):
             Extracts text from an XLSX file.
             """
             text = ""
-            wb = openpyxl.load_workbook(xlsx_path)
+            try:
+                wb = openpyxl.load_workbook(xlsx_path)
+            except InvalidFileException as e:
+                raise ValueError(f"Invalid XLSX file: {e}")
             for sheet in wb:
                 for row in sheet.iter_rows():
                     row_text = "\t".join([str(cell.value) for cell in row if cell.value is not None])

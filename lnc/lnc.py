@@ -70,8 +70,33 @@ default_values={
     "take_after": 50,
     "thread": 10,
     "timeout": 0.1,
+    "max_file_age_days": 365,
     "disable_output_end_prefix": False,
-    "ignore_folder_name_contains": ["audio", "bin", "boot", "dev", "etc", "lib", "lib64", "lost+found", "media", "opt", "proc", "run", "sbin", "srv", "sys", "tmp", "usr", "snap", "swapfile", "vmlinuz"],
+    "ignore_folder_name_contains": [
+        "audio",
+        "bin",
+        "boot",
+        "dev",
+        "etc",
+        "lib",
+        "lib64",
+        "lost+found",
+        "media",
+        "opt",
+        "proc",
+        "run",
+        "sbin",
+        "srv",
+        "sys",
+        "tmp",
+        "usr",
+        "snap",
+        "swapfile",
+        "vmlinuz",
+        "windows",
+        "program files",
+        "programdata",
+    ],
     "ftp_port": 21
 }
 
@@ -146,6 +171,7 @@ def parse_args():
         return filter_group
     def add_download_filter_args(parser):
         parser.add_argument('--ignore_folder_name_contains', type=str, nargs='+', help='Ignore folders that contains. Usage: --ignore_folder_name_contains audio bin boot ...')
+        parser.add_argument('--max-file-age-days', type=int, dest='max_file_age_days', help='Skip files or directories older than specified days')
         return parser
     def add_smb_shares_filter_args(parser):
         parser.add_argument('--ignore_shares', dest='smb_files_ignore_shares', type=str, nargs='+', help='Shares to ignore when listing files. Usage: --ignore_shares ipc$ print$ ...')

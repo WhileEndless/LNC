@@ -6,6 +6,7 @@ from rich.console import Console
 from threading import Lock
 from time import sleep
 from os.path import basename
+from datetime import datetime, timedelta
 PROTOCOL = 'FTP'
 
 class File(FileBase):
@@ -31,6 +32,8 @@ class FTP_Files(FTP_Module):
     def run(self, folder: str = '/'):
         for file in self.list_path(folder):
             filename: str = file
+            if self.is_older_than(file):
+                continue
             if self.is_file(file) and self.get_filesize(file) > 0:
                 data = File()
                 data.target = self.target
@@ -84,3 +87,16 @@ class FTP_Files(FTP_Module):
             return self.connection.size(file)
         except:
             return 0
+
+    def get_mtime(self, file: str):
+        try:
+            response = self.connection.sendcmd(f'MDTM {file}')
+            return datetime.strptime(response[4:], '%Y%m%d%H%M%S')
+        except:
+            return None
+
+    def is_older_than(self, file: str) -> bool:
+        mtime = self.get_mtime(file)
+        if not mtime:
+            return False
+        return datetime.utcnow() - mtime > timedelta(days=self.config.max_file_age_days)
